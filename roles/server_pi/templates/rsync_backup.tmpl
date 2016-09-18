@@ -1,0 +1,16 @@
+#!/bin/bash
+# Store logs at the remote server at /tmp/rsync_to_remoteserver.log, and locally at /var/log/rsync_to_remoteserver.log
+rsync  \
+  --rsync-path='/usr/bin/rsync --log-file=/tmp/rsync_to_remoteserver.log --fake-super' \
+  --log-file=/var/log/rsync_to_remoteserver.log \
+  -aAX -H --delete  --numeric-ids \
+  --exclude='/dev/*' \
+  --exclude='/proc/*' \
+  --exclude='/sys/*' \
+  --exclude='/tmp/*' \
+  --exclude='/run/*' \
+  --exclude='/mnt/*' \
+  --exclude='/media/*' \
+  --exclude='/lost+found' \
+  --exclude='/overlay' \
+   / {{ rsync_target }}

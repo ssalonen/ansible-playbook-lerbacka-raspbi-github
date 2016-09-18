@@ -1,0 +1,8 @@
+- name: Ensure fake-hwclock is present
+  apt: name=fake-hwclock state=present
+
+- name: Ensure /etc/init.d/ntp is enabled
+  service: name=ntp state=started enabled=true
+
+- name: Copy modified fake-hwclock to
+  copy: src=roles/overlay/files/fake-hwclock dest=/etc/cron.hourly/fake-hwclock

@@ -1,0 +1,97 @@
+---
+- name: Configure a headless pi setup
+  hosts: pis
+  become: yes
+  vars:
+    timezone: "Europe/Helsinki"
+    ip: "192.168.1.101/24"
+    gateway: "192.168.1.11"
+    dns1: "192.168.1.11"
+    hostname: "lerbacka-raspi"
+    realpi: true
+    # we do not want to have finnish text, keep the en_US locale
+    locale: "en_US.UTF8"
+    user: "lerbacka"
+    authorized_keys:
+      - user: pi
+        pubkey: "ssh-rsa publickeyhere key description here"
+      - user: root
+        pubkey: "ssh-rsa publickeyhere key description here"
+      - path: /home/pi/.ssh/known_hosts
+    known_hosts:
+      - path: /home/pi/.ssh/known_hosts
+        key: "my.host.com ecdsa-sha2-nistp256 keyhere"
+        name: my.host.com
+      - path: /root/.ssh/known_hosts
+        key: "my.host.com ecdsa-sha2-nistp256 keyhere"
+        name: my.host.com
+    etc_openhab_repo: "git@bitbucket.org:user/etc-openhab.git"
+    var_lib_openhab_repo: "git@bitbucket.org:user/var-lib-openhab.git"
+    rsync_target: "rsyncuser@my.host.com:system-rsync"
+  vars_files:
+    - vars/id_rsa.yml
+    - vars/user_passwords.yml
+
+  pre_tasks:
+  - name: ensure overlay is disabled, and restart machine if it was disabled
+    shell: ( test -x /sbin/overlayctl && ( overlayctl status | grep -q "overlay is active" ) ) && overlayctl disable && shutdown -r now "Rebooting to disable overlay"
+    async: 1
+    poll: 0
+    become: true
+    ignore_errors: true
+    tags:
+      - quickie
+  - name: waiting for server to come back
+    local_action: wait_for host={{ inventory_hostname }} delay=1 port=22 state=started timeout=330
+    become: false
+    tags:
+      - quickie
+  - name: "mount boot"
+    shell: (mount | grep -q 'on /boot ') || mount /dev/mmcblk0p1 /boot
+    when: not realpi
+    tags:
+      - quickie
+  - include: roles/overlay/tasks/main.yml
+  # Try to fix some "packages cannot be authenticated errors"
+  - name: apt key update
+    command: apt-key update
+  - name: Update Aptitude
+    apt: update_cache=yes cache_valid_time=3600
+  - name: reinstall keyring
+    command: aptitude reinstall raspbian-archive-keyring
+  roles:
+   - role: mikolak.raspi-config
+     raspi_config_update_packages: realpi
+     raspi_config_expanded_filesystem: "{{ realpi }}"
+     raspi_config_ensure_optimal_cpu_params: no
+     raspi_config_locale: "{{ locale }}"
+     raspi_config_hostname: "{{ hostname }}"
+     raspi_config_timezone: "{{ timezone }}"
+     raspi_config_replace_user:
+       name:
+       path_to_ssh_key:
+   - server_pi
+   - common
+   - { role: openhab, tags: [] }
+  post_tasks:
+  - name: "install overlay for next boot"
+    command: overlayctl install
+    tags:
+      - quickie
+  - name: "activate overlay"
+    command: overlayctl enable
+    tags:
+      - quickie
+  - name: restart machine
+    shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+    async: 1
+    poll: 0
+    become: true
+    ignore_errors: true
+    tags:
+      - quickie
+  - name: waiting for server to come back
+    local_action: wait_for host={{ inventory_hostname }} port=22 state=started delay=30 timeout=300
+    become: false
+    tags:
+      - quickie

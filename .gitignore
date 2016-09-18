@@ -1,0 +1,5 @@
+ansible
+ansible-galaxy
+venv
+site.retry
+vault_password

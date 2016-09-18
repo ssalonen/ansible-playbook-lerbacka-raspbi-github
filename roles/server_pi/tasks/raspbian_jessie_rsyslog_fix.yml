@@ -1,0 +1,4 @@
+# Issue with Jessie (/etc/debian_version = 8.0)
+# https://github.com/RPi-Distro/repo/issues/28#issuecomment-216633489
+- name: fix rsyslog
+  shell: sed -i '/# The named pipe \/dev\/xconsole/,$d' /etc/rsyslog.conf

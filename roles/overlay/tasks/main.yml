@@ -1,0 +1,52 @@
+
+- name: create init-overlay docs directory
+  file: path=/usr/share/doc/init-overlay/ state=directory
+
+- name: Copy overlay tools and documentation
+  copy: src=roles/overlay/files/{{ item.src }} dest={{ item.dest }}
+  with_items:
+  - src: overlayctl
+    dest: /sbin/overlayctl
+  - src: init-overlay
+    dest: /sbin/init-overlay
+  - src: init-overlay.txt
+    dest: /usr/share/doc/init-overlay/init-overlay.txt
+  - src: overlaynotice
+    dest: /usr/local/bin/overlaynotice
+
+- name: chmod overlayctl, init-overlay, and init-overlay docs
+  file: path={{ item.path }} state=touch mode={{ item.mode }}
+  with_items:
+  - path: /usr/share/doc/init-overlay/init-overlay.txt
+    mode: 744
+  - path: /sbin/overlayctl
+    mode: 755
+  - path: /sbin/init-overlay
+    mode: 755
+  - path: /usr/local/bin/overlaynotice
+    mode: 755
+
+- name: Configure overlaynotice for .bashrc
+  lineinfile:
+    dest: /etc/bash.bashrc
+    regexp: "\\. /usr/local/bin/overlaynotice"
+    line: ". /usr/local/bin/overlaynotice"
+    insertafter: EOF
+    state: present
+- include: ntp_overlay_compatible.yml
+#
+# Shell
+#
+# rw
+# history -a
+# fake-hwclock save
+# ro
+# 1
+# 2
+# 3
+# 4
+# rw
+# history -a
+# fake-hwclock save
+# ro
+# /etc/bash.bash_logout

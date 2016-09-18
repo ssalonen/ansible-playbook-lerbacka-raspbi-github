@@ -1,0 +1,29 @@
+
+#
+# watchdog
+#
+- name: Enable watchdog module for hardware watchdog
+  when: realpi
+  modprobe: name=bcm2708_wdog state=present
+- name: Install watchdog
+  apt: name=watchdog state=present
+- name: Configure watchdog module (persistent)
+  lineinfile:
+     dest: /etc/modules
+     regexp: "^bcm2708_wdog$"
+     line: "bcm2708_wdog"
+     insertafter: EOF
+     state: present
+- name: Configure watchdog
+  lineinfile: dest=/etc/watchdog.conf regexp="{{ item.regexp }}" line="{{ item.line }}" insertafter=EOF state=present
+  with_items:
+  - regexp: "^#?max-load-1[\\s=]"
+    line: "max-load-1 = 24"
+  - regexp: "^#?watchdog-device[\\s=]"
+    line: "watchdog-device = /dev/watchdog"
+  - regexp: "^#?realtime[\\s=]"
+    line: "realtime = yes"
+  - regexp: "^#?priority[\\s=]"
+    line: "priority = yes"
+- name: Enable watchdog
+  service: name=watchdog state=restarted enabled=true

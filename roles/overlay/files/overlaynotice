@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+overlayctl status
+echo
+echo Notice that all changes are temporary when overlay is active
+echo Use overlayctl for controlling overlay. For more information see /usr/share/doc/init-overlay/init-overlay.txt

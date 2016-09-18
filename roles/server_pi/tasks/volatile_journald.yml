@@ -1,0 +1,7 @@
+- name: Configure systemd logs as volatile (in-memory)
+  lineinfile:
+    dest: /etc/systemd/journald.conf
+    regexp: "^#?Storage[\\s=]"
+    line: "Storage=volatile"
+    insertafter: EOF
+    state: present

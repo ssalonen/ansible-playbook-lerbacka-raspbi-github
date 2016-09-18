@@ -1,0 +1,70 @@
+
+# Try to fix some "packages cannot be authenticated errors"
+- name: apt key update
+  command: apt-key update
+- name: Update Aptitude
+  apt: update_cache=yes
+- name: reinstall keyring
+  command: aptitude reinstall raspbian-archive-keyring
+
+- include: migrate_to_networkd.yml
+- include: bcm2708_watchdog.yml
+- include: restart_on_kernel_panic.yml
+- include: volatile_journald.yml
+- include: remove_bloat.yml
+- include: dist_upgrade.yml
+- include: raspbian_jessie_rsyslog_fix.yml
+
+
+#
+# Network settings
+#
+- name: Configure static ip (primary)
+  template: src=10-static.network.tmpl dest=/etc/systemd/network/10-static.network
+  when: realpi
+
+- name: Configure dhcp (secondary)
+  template: src=20-dhcp.network.tmpl dest=/etc/systemd/network/20-dhcp.network
+
+#
+# Reboot
+#
+# https://support.ansible.com/hc/en-us/articles/201958037-Reboot-a-server-and-wait-for-it-to-come-back
+
+
+
+
+- name: Configure options in /boot/config.txt.
+  lineinfile:
+    dest: /boot/config.txt
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    insertafter: EOF
+    state: present
+  with_items:
+    # Enable 1200ma USB current on newer model Pis.
+    - regexp: "^#?max_usb_current"
+      line: "max_usb_current=1"
+
+
+- name: Set root private key
+  copy: content="{{ private_key_content }}" dest=/root/.ssh/id_rsa mode=600
+  no_log: true
+- name: Set root public key
+  copy: content="{{ public_key_content }}" dest=/root/.ssh/id_rsa.pub mode=644
+- name: Update authorized_keys
+  authorized_key: user="{{ item.user }}" state=present key="{{ item.pubkey }}"
+  with_items: "{{ authorized_keys }}"
+- name: Set user passwords
+  user: name="{{ item.user }}" password="{{ item.password_sha_512 }}"
+  no_log: true
+  with_items: "{{ passwords }}"
+
+- name: Set known_hosts
+  known_hosts: key="{{ item.key }}" name="{{ item.name }}" path="{{ item.path }}" state=present
+  with_items: "{{ known_hosts }}"
+  tags:
+    - quickie
+
+- name: Setup backup script
+  template: src=rsync_backup.tmpl dest=/etc/cron.daily/rsync_backup mode=755

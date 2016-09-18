@@ -1,0 +1,118 @@
+- name: add openHAB Bintray Repositories key to the apt-keyring
+  apt_key: url=https://bintray.com/user/downloadSubjectPublicKey?username=openhab state=present
+
+- name: add openhab repo
+  apt_repository: repo='deb http://dl.bintray.com/openhab/apt-repo stable main' state=present
+
+- name: Update Aptitude
+  apt: update_cache=yes
+
+- name: Install openhab prerequisites
+  apt: name={{ item }} state=latest
+  with_items:
+    - oracle-java8-jdk
+    - git
+
+- name: Install openhab
+  apt: name={{ item }} state=latest
+  with_items:
+    - oracle-java8-jdk
+    - openhab-runtime
+    - openhab-addon-binding-zwave
+    - openhab-addon-binding-modbus
+    - openhab-addon-core-jsr223
+    - openhab-addon-action-telegram
+  tags:
+    - quickie
+
+- name: Tune start script for JSR compatibility
+  lineinfile:
+    dest: /etc/default/openhab
+    regexp: "JAVA_ARGS="
+    line: "JAVA_ARGS=\"-Dorg.osgi.framework.bundle.parent=ext\""
+    insertafter: EOF
+    state: present
+
+- shell: ls /usr/share/openhab/addons/org.openhab.binding.modbus-1.8.*.jar || echo
+  register: modbus18x_paths
+
+- name: Install experimental 1.9.x version if modbus 1.8.x binding present (fetch 1.9.0-SNAPSHOT)
+  get_url:
+    url: https://openhab.ci.cloudbees.com/job/openHAB1-Addons/ws/bundles/binding/org.openhab.binding.modbus/target/org.openhab.binding.modbus-1.9.0-SNAPSHOT.jar
+    dest: /usr/share/openhab/addons/
+  with_items:
+        - "{{ modbus18x_paths.stdout_lines }}"
+
+- name: Install experimental 1.9.x version if modbus 1.8.x binding present (remove 1.8.x)
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+        - "{{ modbus18x_paths.stdout_lines }}"
+
+- name: Install experimental dynamodb binding (fetch 1.9.0-SNAPSHOT)
+  get_url:
+    url: https://github.com/ssalonen/openhab/releases/download/dynamodb-pr-v1-rebased-2016-07-16/org.openhab.persistence.dynamodb-1.9.0-SNAPSHOT.jar
+    dest: /usr/share/openhab/addons/
+
+- name: add openhab to dialout group to allow access to serial
+  user: name=openhab shell=/bin/bash groups=dialout append=yes
+
+- name: Creates backup directory for configurations
+  file: path=/tmp/ansible-backup state=directory
+  tags:
+    - quickie
+
+- name: remove existing configurations
+  command: mv {{ item }} /tmp/ansible-backup/{{ item | replace("/", "_") }}
+  ignore_errors: yes
+  with_items:
+    - /etc/openhab
+    - /var/lib/openhab
+  tags:
+    - quickie
+- name: checkout custom openhab configurations
+  git:
+    repo: "{{ item.repo }}"
+    accept_hostkey: yes
+    force: yes
+    dest: "{{ item.dest }}"
+  with_items:
+    - repo:  "{{ etc_openhab_repo }}"
+      dest: /etc/openhab
+    - repo: "{{ var_lib_openhab_repo }}"
+      dest: /var/lib/openhab
+  tags:
+    - quickie
+- name: install configuration (chmod)
+  file: recurse=True owner="openhab" path="{{ item }}"
+  with_items:
+    - /etc/openhab
+    - /var/lib/openhab
+  tags:
+    - quickie
+
+- name: Creates backup directory for habmin
+  file: path=/tmp/habmin state=directory
+
+- name: install habmin (fetch)
+  unarchive: src=https://github.com/cdjackson/HABmin/releases/download/0.1.3-snapshot/habmin.zip dest=/tmp/habmin copy=no
+
+- name: install habmin (mv)
+  shell: "( rm -rf {{item.dest }} || true ) && mv {{ item.src }} {{ item.dest }}"
+  with_items:
+    - src: "/tmp/habmin/addons/org.openhab.io.habmin-1.5.0-SNAPSHOT.jar"
+      dest: /usr/share/openhab/addons/org.openhab.io.habmin-1.5.0-SNAPSHOT.jar
+    - src: "/tmp/habmin/webapps/habmin"
+      dest: /usr/share/openhab/webapps/habmin
+
+- name: install habmin (chmod)
+  file: recurse="{{ item.recurse }}" owner="openhab" path="{{ item.path }}"
+  with_items:
+    - path: /usr/share/openhab/addons/org.openhab.io.habmin-1.5.0-SNAPSHOT.jar
+      recurse: false
+    - path: /usr/share/openhab/webapps/habmin
+      recurse: true
+
+- name: Enable and start openhab
+  service: name=openhab state=started enabled=true

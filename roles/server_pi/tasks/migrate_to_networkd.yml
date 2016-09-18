@@ -1,0 +1,7 @@
+#
+# Switch /etc/init.d/networking to systemd-networkd
+#
+- name: Enable and start systemd-networkd
+  service: name=systemd-networkd.service state=started enabled=true
+- name: Disable old /etc/init.d/networking
+  service: name=networking state=stopped enabled=false

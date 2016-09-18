@@ -1,0 +1,49 @@
+
+- name: Remove unneeded stuff
+  apt: name={{ item }} state=absent purge=yes
+  with_items:
+    - anacron
+    - console-setup
+    - dbus
+    - desktop*
+    - dphys-swapfile
+    - gnome*
+    - gsfonts
+    - gtk*
+    - gvfs*
+    - libgtk*
+    - libqt*
+    - libxcb*
+    - libxfont*
+    - libxt*
+    - lightdm
+    - lightdm
+    - logrotate
+    - lxde*
+    - lxmenu*
+    - lxpanel
+    - omxplayer
+    - openbox
+    - penguinspuzzle
+    - python-tk
+    - python3-tk
+    - scratch
+    - shared-mime-info
+    - wolfram-engine
+    - x11*
+    - xarchiver
+    - xauth
+    - xdg-*
+    - xinit
+    - xkb-data
+    - xserver-common
+    - xserver*
+
+- name: Check if packages need to be autoremoved
+  command: apt-get --dry-run autoremove
+  register: check_autoremove
+  changed_when: False
+
+- name: Autoremove unused packages
+  command: apt-get -y autoremove
+  when: "'packages will be REMOVED' in check_autoremove.stdout"

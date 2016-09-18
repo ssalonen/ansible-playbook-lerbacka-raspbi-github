@@ -1,0 +1,8 @@
+
+- name: Configure automatic restart on kernel panic
+  lineinfile:
+    dest: /etc/sysctl.conf
+    regexp: "^#?kernel\\.panic[\\s=]"
+    line: "kernel.panic = 10"
+    insertafter: EOF
+    state: present
