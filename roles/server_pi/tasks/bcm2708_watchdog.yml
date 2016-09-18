@@ -2,18 +2,36 @@
 #
 # watchdog
 #
-- name: Enable watchdog module for hardware watchdog
+- name: Enable watchdog module for hardware watchdog (raspi2)
   when: realpi
   modprobe: name=bcm2708_wdog state=present
-- name: Install watchdog
-  apt: name=watchdog state=present
-- name: Configure watchdog module (persistent)
+  register: raspi2_module
+  ignore_errors: True
+- name: Configure watchdog module (persistent) (raspi2)
+  when: realpi and raspi2_module|succeeded
   lineinfile:
      dest: /etc/modules
      regexp: "^bcm2708_wdog$"
      line: "bcm2708_wdog"
      insertafter: EOF
      state: present
+- name: Enable watchdog module for hardware watchdog (raspi3)
+  when: realpi and raspi2_module|failed
+  modprobe: name=bcm2835_wdt state=present
+  register: raspi3_module
+- name: Configure watchdog module (persistent) (raspi3)
+  when: realpi and raspi3_module|succeeded
+  lineinfile:
+    dest: /etc/modules
+    regexp: "^bcm2835_wdt$"
+    line: "bcm2835_wdt"
+    insertafter: EOF
+    state: present
+
+- name: Install watchdog
+  apt: name=watchdog state=present
+  tags:
+    - quickie
 - name: Configure watchdog
   lineinfile: dest=/etc/watchdog.conf regexp="{{ item.regexp }}" line="{{ item.line }}" insertafter=EOF state=present
   with_items:
