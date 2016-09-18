@@ -1,8 +1,0 @@
-- name: install diagslave (fetch)
-  unarchive: src=http://www.modbusdriver.com/downloads/diagslave.2.12.zip dest=/tmp/ copy=no
-
-- name: install diagslave (mv)
-  copy: src=/tmp/linux/diagslave dest=/usr/local/bin/diagslave remote_src=yes
-
-- name: install diagslave (chmod)
-  file: path=/usr/local/bin/diagslave state=touch mode=755
