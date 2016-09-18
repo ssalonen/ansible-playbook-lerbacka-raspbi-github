@@ -1,3 +1,9 @@
+## Quick introduction
+
+My ansible playbook used to set-up openhab server on a raspberry pi (works with 2/3 at least). The set-up is read-only, using [init-overlay](https://github.com/ppisa/rpi-utils/tree/master/init-overlay). 
+
+Hopefully useful for someone :)
+
 ## Installation
 
 1. install ansible >=2.0
