@@ -5,3 +5,6 @@
   service: name=systemd-networkd.service state=started enabled=true
 - name: Disable old /etc/init.d/networking
   service: name=networking state=stopped enabled=false
+
+- name: Enable and start wpa_supplicant
+  service: name=wpa_supplicant.service state=started enabled=true

@@ -3,8 +3,6 @@
   apt: name={{ item }} state=absent purge=yes
   with_items:
     - anacron
-    - console-setup
-    - dbus
     - desktop*
     - dphys-swapfile
     - gnome*
@@ -35,7 +33,6 @@
     - xauth
     - xdg-*
     - xinit
-    - xkb-data
     - xserver-common
     - xserver*
 

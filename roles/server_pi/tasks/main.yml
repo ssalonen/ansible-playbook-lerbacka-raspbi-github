@@ -20,11 +20,11 @@
 # Network settings
 #
 - name: Configure static ip (primary)
-  template: src=10-static.network.tmpl dest=/etc/systemd/network/10-static.network
+  template: src=10-eth0-static.network.tmpl dest=/etc/systemd/network/10-eth0-static.network
   when: realpi
 
 - name: Configure dhcp (secondary)
-  template: src=20-dhcp.network.tmpl dest=/etc/systemd/network/20-dhcp.network
+  template: src=20-eth0-dhcp.network.tmpl dest=/etc/systemd/network/20-eth0-dhcp.network
 
 #
 # Reboot
