@@ -44,7 +44,7 @@
     tags:
       - quickie
   - name: waiting for server to come back
-    local_action: wait_for host={{ inventory_hostname }} delay=1 port=22 state=started timeout=330
+    local_action: wait_for host={{ inventory_hostname }} delay=15 port=22 state=started timeout=330
     become: false
     tags:
       - quickie
