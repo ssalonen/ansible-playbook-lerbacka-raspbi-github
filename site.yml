@@ -55,6 +55,7 @@
     tags:
       - quickie
   - include: roles/overlay/tasks/main.yml
+    become: true
   # Try to fix some "packages cannot be authenticated errors"
   - name: apt key update
     command: apt-key update
