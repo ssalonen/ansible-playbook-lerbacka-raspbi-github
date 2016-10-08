@@ -11,6 +11,7 @@
     realpi: true
     # we do not want to have finnish text, keep the en_US locale
     locale: "en_US.UTF8"
+    keyboard: "fi"
     user: "lerbacka"
     authorized_keys:
       - user: pi

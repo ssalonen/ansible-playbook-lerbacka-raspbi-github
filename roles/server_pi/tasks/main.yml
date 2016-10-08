@@ -15,6 +15,9 @@
 - include: dist_upgrade.yml
 - include: raspbian_jessie_rsyslog_fix.yml
 
+- name: Switch keyboard layout
+  lineinfile: dest=/etc/default/keyboard regexp=XKBLAYOUT line='XKBLAYOUT="{{ keyboard }}"'
+  sudo: true
 
 #
 # Network settings
