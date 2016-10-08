@@ -34,19 +34,3 @@
     insertafter: EOF
     state: present
 - include: ntp_overlay_compatible.yml
-#
-# Shell
-#
-# rw
-# history -a
-# fake-hwclock save
-# ro
-# 1
-# 2
-# 3
-# 4
-# rw
-# history -a
-# fake-hwclock save
-# ro
-# /etc/bash.bash_logout
