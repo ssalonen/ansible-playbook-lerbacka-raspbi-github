@@ -29,7 +29,9 @@
     var_lib_openhab_repo: "git@bitbucket.org:user/var-lib-openhab.git"
     rsync_target: "rsyncuser@my.host.com:system-rsync"
   vars_files:
+    # Defines public_key_content, private_key_content
     - vars/id_rsa.yml
+    # Defines passwords which list of dict with user and password_sha_512
     - vars/user_passwords.yml
 
   pre_tasks:
